@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Calculate</title>
+    </head>
+
+    <style>
+        table {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th {
+            border: 2px solid black;
+            padding: 5px;
+        }
+        td {
+            border: 1px solid black;
+            padding: 5px;
+        }
+        tr {
+            border: 1px solid black;
+            padding: 5px;
+        }
+    </style>
+
+    <script>
+
+        var doc1V = {};
+        var doc2V = {};
+        var doc3V = {};
+        var doc1T = 1;
+        var doc2T = 1;
+        var doc3T = 1;
+
+        const parse = (val) => {
+            let r = [];
+
+            let a = val.split(",")
+                .map(a => a.replace(/ /g, ''))
+                .map(a => a.split(":"))
+                .map(a => [a[0], Number(a[1])])
+                .filter(a => a.length >= 1 && !isNaN(a[1]) );
+            if (a.length == 0) return {};
+            if (a.length == 1) {
+                return {[a[0][0]]: Number(a[0][1]) }
+            }
+            a[0] = {[a[0][0]]: Number(a[0][1]) };
+            return a.reduce((a,b) => ({...a, [b[0]]: Number(b[1])}));
+        }
+
+        function handleInput(doc, e) {
+            let parseIn = parse(e.value);
+            switch (doc) {
+                case "doc1":
+                    doc1V = parseIn;
+                    break;
+                case "doc2":
+                    doc2V = parseIn;
+                    break;
+                case "doc3":
+                    doc3V = parseIn;
+                    break;
+            }
+
+            mergeValues();
+            output();
+        }
+
+        function handleInputTotal(doc, e) {
+            let parseIn = Number(e.value);
+            parseIn = isNaN(parseIn) ? 1 : parseIn;
+            switch (doc) {
+                case "doc1":
+                    doc1T = parseIn;
+                    break;
+                case "doc2":
+                    doc2T = parseIn;
+                    break;
+                case "doc3":
+                    doc3T = parseIn;
+                    break;
+            }
+            output();
+        }
+
+        const mergeValues = () => {
+            let lValues = new Set();
+            let d = (l) => {
+                Object.keys(l).forEach(a => {
+                    if (l[a] != 0) {
+                        lValues.add(a);
+                    }
+                });
+            }
+            d(doc1V);
+            d(doc2V);
+            d(doc3V);
+            lValues.forEach((a) => {
+                doc1V[a] = doc1V[a] ?? 0;
+                doc2V[a] = doc2V[a] ?? 0;
+                doc3V[a] = doc3V[a] ?? 0;
+            })
+        }
+
+        const output = () => {
+            let doc1S = Object.keys(doc1V).sort();
+            let doc2S = Object.keys(doc2V).sort();
+            let doc3S = Object.keys(doc3V).sort();
+            let vDoc1 = doc1S.map(a => doc1V[a]);
+            let vDoc2 = doc2S.map(a => doc2V[a]);
+            let vDoc3 = doc3S.map(a => doc3V[a]);
+            let relvDoc1 = vDoc1.map(a => a / doc1T);
+            let relvDoc2 = vDoc2.map(a => a / doc2T);
+            let relvDoc3 = vDoc3.map(a => a / doc3T);
+
+            let parent = document.createElement('div');
+            
+            let addTag = (name, data) => {
+                let relative = document.createElement('div');
+                let nameE = document.createElement('p');
+                nameE.innerHTML = name;
+                relative.appendChild(nameE);
+                let value = document.createElement('p');
+                value.innerHTML = data;
+                relative.appendChild(value);
+                parent.appendChild(relative);
+            };
+
+            let buildTable = (name, cNames, cValues) => {
+                let relative = document.createElement('div');
+                let nameE = document.createElement('p');
+                nameE.innerHTML = name;
+                relative.appendChild(nameE);
+                let table = document.createElement('table');
+                let headers = document.createElement('tr');
+                for (let cname of cNames) {
+                    let th = document.createElement('th');
+                    th.innerHTML = cname;
+                    headers.appendChild(th);
+                }
+                table.appendChild(headers);
+                let row = document.createElement('tr');
+                for (let cvalue of cValues) {
+                    let td = document.createElement('td');
+                    td.innerHTML = cvalue;
+                    row.appendChild(td);
+                }
+                table.appendChild(row);
+                relative.appendChild(table);
+                parent.appendChild(relative);
+            }
+
+            addTag("Document 1 Relative:", doc1S.map(a => `${a}: ${doc1V[a]}`).join(","));
+            addTag("Document 2 Relative:", doc2S.map(a => `${a}: ${doc2V[a]}`).join(","));
+            addTag("Document 3 Relative:", doc3S.map(a => `${a}: ${doc3V[a]}`).join(","));
+            
+            buildTable('Man abs', ['1,2', '2,3', '1,3'], [
+                [0, ...vDoc1.map((a, i) => Math.abs(a - vDoc2[i]))].reduce((a, b) => a + b),
+                [0, ...vDoc2.map((a, i) => Math.abs(a - vDoc3[i]))].reduce((a, b) => a + b),
+                [0, ...vDoc1.map((a, i) => Math.abs(a - vDoc3[i]))].reduce((a, b) => a + b)
+            ]
+            );
+            buildTable('Man rel', ['1,2', '2,3', '1,3'], [
+                [0, ...relvDoc1.map((a, i) => Math.abs(a - relvDoc2[i]))].reduce((a, b) => a + b),
+                [0, ...relvDoc2.map((a, i) => Math.abs(a - relvDoc3[i]))].reduce((a, b) => a + b),
+                [0, ...relvDoc1.map((a, i) => Math.abs(a - relvDoc3[i]))].reduce((a, b) => a + b)
+            ]);
+
+            buildTable('Euclidean Abs', ['1,2', '2,3', '1,3'], [
+                Math.sqrt([0, ...vDoc1.map((a, i) => (a - vDoc2[i]) ** 2)].reduce((a, b) => a + b)),
+                Math.sqrt([0, ...vDoc2.map((a, i) => (a - vDoc3[i]) ** 2)].reduce((a, b) => a + b)),
+                Math.sqrt([0, ...vDoc1.map((a, i) => (a - vDoc3[i]) ** 2)].reduce((a, b) => a + b)),
+            ]);
+
+            buildTable('Euclidean Rel', ['1,2', '2,3', '1,3'], [
+                Math.sqrt([0, ...relvDoc1.map((a, i) => (a - relvDoc2[i]) ** 2)].reduce((a, b) => a + b)),
+                Math.sqrt([0, ...relvDoc2.map((a, i) => (a - relvDoc3[i]) ** 2)].reduce((a, b) => a + b)),
+                Math.sqrt([0, ...relvDoc1.map((a, i) => (a - relvDoc3[i]) ** 2)].reduce((a, b) => a + b))
+            ]);
+
+            const cosSim = (arr1, arr2) => {
+                let dot = [0, ...arr1.map((e, i) => e * arr2[i])].reduce(((a,b) =>a+b));
+                let size = (a) => Math.sqrt([0, ...a.map((e => e ** 2))].reduce((a, b) => a + b))
+                let v = dot / (size(arr1) * size(arr2));
+                if (isNaN(v))
+                    return "Not enough information";
+                let ang = Math.acos(v) * 180 / Math.PI;
+                return `value: ${v} (&ang; ${ang} &deg;)`
+            }
+
+            buildTable('Cos Abs', ['1,2', '2,3', '1,3'], [
+                cosSim(vDoc1, vDoc2),
+                cosSim(vDoc2, vDoc3),
+                cosSim(vDoc1, vDoc3),
+            ]);
+
+            buildTable('Cos Rel', ['1,2', '2,3', '1,3'], [
+                cosSim(relvDoc1, relvDoc2),
+                cosSim(relvDoc2, relvDoc3),
+                cosSim(relvDoc1, relvDoc3),
+            ]);
+
+            let root= document.getElementById("add");
+            root.innerHTML = "";
+            root.appendChild(parent);
+        }
+    </script>
+
+    <body>
+        <label> Doc 1 wordlist: word1:count, word2:count</label><br>
+        <textarea oninput="handleInput('doc1', this)" id="doc1" ></textarea><br>
+        <label> Doc 2 wordlist: word1:count, word2:count</label><br>
+        <textarea oninput="handleInput('doc2',this)" id="doc2"  ></textarea><br>
+        <label> Doc 3 wordlist: word1:count, word2:count</label><br>
+        <textarea oninput="handleInput('doc3',this)" id="doc3"  ></textarea><br>
+        <label> Doc 1 Total</label><br>
+        <input oninput="handleInputTotal('doc1', this)" id="doc1T"  /><br>
+        <label> Doc 2 Total</label><br>
+        <input oninput="handleInputTotal('doc2', this)" id="doc2T"  /><br>
+        <label> Doc 3 Total</label><br>
+        <input oninput="handleInputTotal('doc3', this)" id="doc3T"  /><br>
+        <div id="add" />
+    </body>
+</html>
