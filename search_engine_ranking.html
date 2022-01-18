@@ -237,7 +237,7 @@
 
                 let table = document.createElement('table');
                 let headers = document.createElement('tr');
-                for (let cname of ["System name", "Recall", "Precision", "f(0.5)", "f(1)", "f(2)", headerInput.outerHTML]) {
+                for (let cname of ["System name", "Precision", "Recall", "f(0.5)", "f(1)", "f(2)", headerInput.outerHTML]) {
                     let th = document.createElement('th');
                     th.innerHTML = cname;
                     headers.appendChild(th);
@@ -258,8 +258,7 @@
                     input2.id = `s${systemI}1`;
 
                     let f = (b) => {
-                        console.log((b+1)*system[1]*system[0], ((b*system[1])+system[0]), b, system);
-                        let v = ((b+1)*system[1]*system[0])/((b*system[1])+system[0])
+                        let v = ((b+1)*system[0]*system[1])/((b*system[0])+system[1])
                         return isNaN(v) ? '-' : v;
                     };
 
