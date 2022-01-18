@@ -1,0 +1,473 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <title>Calculate</title>
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans&display=swap" rel="stylesheet">
+
+        <style>
+            html, body, * {
+                font-family: 'DM Sans', sans-serif;
+            }
+
+            table {
+                border: 1px solid black;
+                border-collapse: collapse;
+            }
+            th {
+                border: 2px solid black;
+                padding: 5px;
+            }
+            td {
+                border: 1px solid black;
+                padding: 5px;
+            }
+            tr {
+                border: 1px solid black;
+                padding: 5px;
+            }
+            .relativeWrapper div{
+                display: inline-block;
+                padding: 5px;
+                border: 1px solid;
+                margin: 2px 2px 0 0;
+            }
+            .parent{
+                margin-top:25px;
+            }
+            .parent div{
+                padding:20px;
+            }
+            .parent div:nth-child(odd) {
+                background-color: #E0E0E0;
+            }
+
+            #controls {
+                position: fixed;
+                top: 0;
+                right: 0;
+                padding: 20px 40px;
+                background: white;
+                z-index: 2;
+            }
+
+            #showControls {
+                position: fixed;
+                top: 0;
+                right: 0;
+                margin: 20px 40px;
+                z-index: 1;
+            }
+
+            textarea {
+                min-width: 100%;
+            }
+
+            .red td {
+                border: 3px solid red;
+            }
+
+            .green td {
+                border: 3px solid green;
+            }
+
+            .hidden { display: none; }
+            .noborder {
+                border: none;
+            }
+
+            #genT {
+                margin-top: 10px;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div id="table_relevant">
+            <label for="total">Total docs</label><input type="text" id="total" onchange="handleRelevantInput('total', this)">
+            <table id="table_relevant_table">
+                <tr>
+                    <td><label for="tp">True Positives</label><input id="tp" onchange="handleRelevantInput('tp', this)" type="text"></td>
+                    <td><label for="tn">True Negatives</label><input id="tn" onchange="handleRelevantInput('tn', this)" type="text"></td>
+                </tr>
+                <tr>
+                    <td><label for="fp">False Positives</label><input id="fp" onchange="handleRelevantInput('fp', this)" type="text"></td>
+                    <td><label for="fn">False Negatives</label><input id="fn" onchange="handleRelevantInput('fn', this)" type="text"></td>
+                </tr>
+                <tr>
+                    <td ><label>Recall</label><span id="recall"></td>
+                    <td ><label>Precision</label><span id="precision"></span></td>
+                </tr>
+            </table>
+        </div>
+
+        <div>
+            <div id="genT"></div>
+            <button onclick="addSystem()">Add System</button>
+            <button onclick="dropSystem()">Drop System</button>
+        </div>
+
+        <script >
+
+            var total = null;
+            var tp = null;
+            var tn = null;
+            var fp = null;
+            var fn = null;
+            
+            const handleRelevantInput = (name, e) => {
+                let value = null
+                if (e.value != "") {
+                    value = Number(e.value);
+                    value = isNaN(value) ? 0 : value;
+                }
+                switch(name) {
+                    case "total":
+                        total = value;
+                        break;
+                    case "tp":
+                        tp = value;
+                        break;
+                    case "tn":
+                        tn = value
+                        break;
+                    case "fp":
+                        fp = value;
+                        break;
+                    case "fn":
+                        fn = value;
+                        break;
+                    case "fc":
+                        fc = value;
+                        generateT();
+                        return;
+                }
+                updateRelevantValues();
+            }
+
+            const updateRelevantValues = () => {
+                
+                
+                document.getElementById("table_relevant_table").classList.remove('red');
+                document.getElementById("table_relevant_table").classList.remove('green');
+
+                let tpN = tp !== null;
+                let tnN = tn !== null;
+                let fpN = fp !== null;
+                let fnN = fn !== null;
+                let sum1Help =(tpN + fnN + fpN + tnN)
+                while ( sum1Help == 3 &&  total !== null) { 
+                    if (tpN && tnN && fpN) {
+                        let t = total - tp - tn - fp;
+                        if (t > 0) {
+                            fn = t;
+                            document.getElementById("fn").value = fn
+                            break;
+                        }
+                    } 
+                    if (tpN && tnN && fnN) {
+                        let t = total - tp - tn - fn;
+                        if (t > 0) {
+                            fp = t;
+                            document.getElementById("fp").value = fp;
+                            break;
+                        }
+                    } 
+                    if (tpN && fpN && fnN) {
+                        let t = total - tp - fp - fn;
+                        if (t > 0) {
+                            tn = t;
+                            document.getElementById("tn").value = tn;
+                            break;
+                        }
+                    } 
+                    if (tnN && fpN && fnN) {
+                        let t = total - tn - fp - fn;
+                        if (t > 0) {
+                            tp = t;
+                            document.getElementById("tp").value = tp;
+                            break;
+                        }
+                    }
+                    break;
+                }
+                tpN = tp !== null;
+                tnN = tn !== null;
+                fpN = fp !== null;
+                fnN = fn !== null;
+                sum1Help =(tpN + fnN + fpN + tnN)
+
+                if (sum1Help === 4 && total !== null) {
+                    let sum = tp + fp + tn + fn
+                    if (total === sum) {
+                        document.getElementById("table_relevant_table").classList.add('green');
+
+                        let pre = tp/(tp+fp);
+                        let re = tp/(tp+fn);
+                        
+                        document.getElementById("recall").innerHTML = re;
+                        document.getElementById("precision").innerHTML = pre;
+
+                    } else {
+                        document.getElementById("table_relevant_table").classList.add('red');
+                    }
+                }
+
+            }
+
+
+            let fc = null;
+            let systems = [[0,0]];
+
+            var generateT = () => {
+                let par = document.getElementById("genT");
+                par.innerHTML = "";
+                
+                let headerInput = document.createElement("input");
+                headerInput.setAttribute('onchange', "handleRelevantInput('fc', this)");
+                headerInput.setAttribute('value', fc ?? '');
+
+                let table = document.createElement('table');
+                let headers = document.createElement('tr');
+                for (let cname of ["System name", "Recall", "Precision", "f(0.5)", "f(1)", "f(2)", headerInput.outerHTML]) {
+                    let th = document.createElement('th');
+                    th.innerHTML = cname;
+                    headers.appendChild(th);
+                }
+                table.appendChild(headers);
+                for (let systemI in systems) {
+                    let system = systems[systemI];
+                    let row = document.createElement('tr');
+                    
+                    let input = document.createElement('input');
+                    input.setAttribute('onchange', `handleInput(${systemI}, 0, this)`);
+                    input.setAttribute('value', system[0]);
+                    input.id = `s${systemI}0`;
+                    
+                    let input2 = document.createElement('input');
+                    input2.setAttribute('onchange', `handleInput(${systemI}, 1, this)`);
+                    input2.setAttribute('value', system[1]);
+                    input2.id = `s${systemI}1`;
+
+                    let f = (b) => {
+                        console.log((b+1)*system[1]*system[0], ((b*system[1])+system[0]), b, system);
+                        let v = ((b+1)*system[1]*system[0])/((b*system[1])+system[0])
+                        return isNaN(v) ? '-' : v;
+                    };
+
+
+                    for (let cvalue of [`System ${Number(systemI) + 1}`, input.outerHTML, input2.outerHTML, f(0.5), f(1), f(2), fc ? f(fc) : '-']) {
+                        let td = document.createElement('td');
+                        td.innerHTML = cvalue;
+                        row.appendChild(td);
+                    }
+                    table.appendChild(row);
+                }
+
+                par.appendChild(table);
+            }
+
+            generateT();
+
+            var addSystem = () => {
+                systems.push([0,0]);
+                generateT();
+            };
+
+            var dropSystem = () => {
+                systems = systems.slice(0, f.length - 1);
+                generateT();
+            };
+            
+            function handleInput(sysI, a, e) {
+                let parseIn = Number(e.value);
+                parseIn = isNaN(parseIn) ? 0 : parseIn;
+                systems[sysI][a] = parseIn;
+                generateT();
+            }
+
+            const mergeValues = () => {
+                let lValues = new Set();
+                let d = (l) => {
+                    Object.keys(l).forEach(a => {
+                        if (l[a] != 0) {
+                            lValues.add(a);
+                        }
+                    });
+                }
+                for(let doc of f) {
+                    d(doc);
+                }
+                lValues.forEach((a) => {
+                    for(let doc of f) {
+                        doc[a] = doc[a] ?? 0;
+                    }
+                })
+            }
+
+            const update = () => {
+                for(let a in f) {
+                    handleInput(a, document.getElementById(`doc${a}`))
+                }
+            } 
+
+            const output = () => {
+                let docsS = f.map(a => Object.keys(a).sort())
+                let docsV = docsS.map((a, i) => a.map(b => f[i][b]));
+                let docsR = docsV.map((a, i) => a.map(b => b / total[i]));
+
+                let calculateIDF = () => {
+                    if (f.length == 0) return;
+                    let r = {};
+                    let list = [];
+                    Object.keys(f[0]).sort().forEach((a, i) => {
+                        r[a] = 0;
+                        list[i] = a;
+
+                    });
+
+                    for (let l of f) {
+                        for (let item in l) {
+                            if (l[item] > 0) {
+                                r[item]++;
+                            }
+                        }
+                    }
+
+                    Object.keys(r).forEach(a => r[a] = Math.log10(f.length / r[a]));
+
+                    return [r, list];
+                };
+
+                let [idf, list] = calculateIDF();
+
+
+                let parent = document.createElement('div');
+                parent.classList.add('parent');
+
+                let relativeWrapper = document.createElement('div');
+                relativeWrapper.classList.add('relativeWrapper');
+                parent.appendChild(relativeWrapper);
+                
+                let addTag = (name, data) => {
+                    let relative = document.createElement('div');
+                    let nameE = document.createElement('h3');
+                    nameE.innerHTML = name;
+                    relative.appendChild(nameE);
+                    let value = document.createElement('p');
+                    value.innerHTML = data;
+                    relative.appendChild(value);
+                    relativeWrapper.appendChild(relative);
+                };
+
+                let buildTable = (name, cNames, cValues, returnV = false) => {
+                }
+
+
+                for (let a in f) {
+                    addTag(`Document ${Number(a) + 1} Known tokens:`, docsS[a].map(b => `${b}: ${f[a][b]}`).join(","));
+                }
+
+                if(showTfIdf) {
+                    buildTable('IDF', Object.keys(idf).sort(), Object.keys(idf).sort().map(a => idf[a]))
+                    buildTable('TF', f.map((_, i) => `Doc ${i + 1}`), docsR.map((a => buildTable(null, list, a, true).outerHTML)));
+                    buildTable('TFIDF', f.map((_, i) => `Doc ${i + 1}`), docsR.map((a => buildTable(null, list, a.map((e, j) => e * idf[list[j]]), true).outerHTML)));
+                }
+
+                if (manAbs)
+                    generateCombs('Man abs', ([l1, l2]) => [0, ...docsV[l1].map((a, i) => Math.abs(a - docsV[l2][i]))].reduce((a, b) => a + b))
+                if (manRel)
+                    generateCombs('Man rel', ([l1, l2]) => [0, ...docsR[l1].map((a, i) => Math.abs(a - docsR[l2][i]))].reduce((a, b) => a + b))
+                if (manTFIDF)
+                    generateCombs('Man TFIDF', ([l1, l2]) => [0, ...docsR[l1].map((a, i) => Math.abs((a - docsR[l2][i])) * idf[list[i]])].reduce((a, b) => a + b))
+                
+                if (eucAbs)
+                    generateCombs('Euclidean Abs', ([l1, l2]) => Math.sqrt([0, ...docsV[l1].map((a, i) => (a - docsV[l2][i]) ** 2)].reduce((a, b) => a + b)))
+                if (eucRel)
+                    generateCombs('Euclidean rel', ([l1, l2]) => Math.sqrt([0, ...docsR[l1].map((a, i) => (a - docsR[l2][i]) ** 2)].reduce((a, b) => a + b)))
+                if (eucTFIDF)
+                    generateCombs('Euclidean TFIDF', ([l1, l2]) => Math.sqrt([0, ...docsR[l1].map((a, i) => ((a - docsR[l2][i]) * idf[list[i]]) ** 2)].reduce((a, b) => a + b)))
+                
+                const cosSim = (arr1I, arr2I, isIdf=false) => {
+                    let arr1 = arr1I;
+                    let arr2 = arr2I;
+                    if  (isIdf) {
+                        arr1 = arr1I.map((a, i) => idf[list[i]] * a);
+                        arr2 = arr2I.map((a, i) => idf[list[i]] * a);
+                    }
+                    let dot = [0, ...arr1.map((e, i) => e * arr2[i])].reduce(((a,b) =>a+b));
+                    let size = (a) => Math.sqrt([0, ...a.map((e => e ** 2))].reduce((a, b) => a + b))
+                    let v = dot / (size(arr1) * size(arr2));
+                    if (isNaN(v))
+                        return "Not enough information";
+                    let ang = Math.acos(v) * 180 / Math.PI;
+                    return `value: ${v} (&ang; ${ang} &deg;)`
+                }
+                
+                if (cosAbs)
+                    generateCombs('Cos Abs', ([l1, l2]) => cosSim(docsV[l1], docsV[l2]))    
+                if (cosRel)
+                    generateCombs('Cos rel', ([l1, l2]) => cosSim(docsR[l1], docsR[l2]))
+                if (cosTFIDF)
+                    generateCombs('Cos TFIDF', ([l1, l2]) => cosSim(docsR[l1], docsR[l2], true))
+
+                let root= document.getElementById("add");
+                root.innerHTML = "";
+                root.appendChild(parent);
+            }
+
+            const changeOp = (op) => {
+                switch(op) {
+                    case "man1":
+                        manAbs = !manAbs;
+                        break
+                    case "man2":
+                        manRel = !manRel;
+                        break
+                    case "man3":
+                        manTFIDF = !manTFIDF;
+                        break
+                    case "euc1":
+                        eucAbs = !eucAbs;
+                        break
+                    case "euc2":
+                        eucRel = !eucRel;
+                        break
+                    case "euc3":
+                        eucTFIDF = !eucTFIDF;
+                        break
+                    case "cos1":
+                        cosAbs = !cosAbs;
+                        break
+                    case "cos2":
+                        cosRel = !cosRel;
+                        break
+                    case "cos3":
+                        cosTFIDF = !cosTFIDF;
+                        break
+                    case "tfidf":
+                        showTfIdf = !showTfIdf;
+                        break
+                }
+                mergeValues();
+                output();
+            }
+
+            function hideControls() {
+                document.querySelector('#controls').classList.add('hidden');
+            }
+
+            function showControls() {
+                document.querySelector('#controls').classList.remove('hidden');
+            }
+        </script>
+    </body>
+</html>
