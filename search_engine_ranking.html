@@ -13,6 +13,9 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=DM+Sans&display=swap" rel="stylesheet">
 
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js" integrity="sha512-vnRdmX8ZxbU+IhA2gLhZqXkX1neJISG10xy0iP0WauuClu3AIMknxyDjYHEpEhi8fTZPyOCWgqUCnEafDB/jVQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js" integrity="sha512-1zKK2bG3QY2JaUPpfHZDUMe3dwBwFdCDwXQ01GrKSd+/l0hqPbF+aak66zYPUZtn+o2JYi1mjXAqy5mW04v3iA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
         <style>
             html, body, * {
                 font-family: 'DM Sans', sans-serif;
@@ -123,6 +126,17 @@
             <div id="genT"></div>
             <button onclick="addSystem()">Add System</button>
             <button onclick="dropSystem()">Drop System</button>
+        </div>
+
+        <div>
+            <div id="genRank"></div>
+            <button onclick="addConn()">Add Connection</button>
+            <button onclick="dropConn()">Drop Connection</button><br/>
+            <label>
+                Shared percentage
+            </label>
+            <input onchange="handleRankInput(true, '', '', this)" />
+            <div id="genRankR"></div>
         </div>
 
         <script >
@@ -313,7 +327,6 @@
                     let vs = values[systemI];
 
                     for (let i in vs) { 
-                        console.log("test");
                         inputs.push(createSpan(best[i] == systemI ? 1 : worst[i] == systemI ? 2 : 0, vs[i]))
                     }
 
@@ -347,6 +360,135 @@
                 generateT();
             }
 
+            var percentage = 0;
+
+            function handleRankInput(isPer, sysI, a, e) {
+                if(isPer) {
+                    let parseIn = Number(e.value);
+                    parseIn = isNaN(parseIn) ? 0 : parseIn;
+                    percentage = parseIn;
+                } else {
+                    connections[sysI][a] = e.value == '' ? null : e.value;
+                }
+                generateRank();
+            }
+
+            var connections = [];
+
+            var generateRank = () => {
+                let par = document.getElementById("genRank");
+                par.innerHTML = "";
+
+                let table = document.createElement('table');
+                let headers = document.createElement('tr');
+                for (let cname of ["Connection name", "Origin", "Destination"]) {
+                    let th = document.createElement('th');
+                    th.innerHTML = cname;
+                    headers.appendChild(th);
+                }
+                table.appendChild(headers);
+
+                for (let connI in connections) {
+                    let conn = connections[connI];
+                    let row = document.createElement('tr');
+                    
+                    let input = document.createElement('input');
+                    input.setAttribute('onchange', `handleRankInput(false, ${connI}, 0, this)`);
+                    input.setAttribute('value', conn[0] ?? '');
+                    input.id = `s${connI}0`;
+                    
+                    let input2 = document.createElement('input');
+                    input2.setAttribute('onchange', `handleRankInput(false, ${connI}, 1, this)`);
+                    input2.setAttribute('value', conn[1] ?? '');
+                    input2.id = `s${connI}1`;
+
+                    for (let cvalue of [`Connection ${Number(connI) + 1}`, input.outerHTML, input2.outerHTML]) {
+                        let td = document.createElement('td');
+                        td.innerHTML = cvalue;
+                        row.appendChild(td);
+                    }
+                    table.appendChild(row);
+                }
+
+                par.appendChild(table);
+
+                if (isNaN(Number(percentage))) return;
+
+                // Generate eqs
+                par = document.getElementById("genRankR");
+                par.innerHTML = "";
+
+                let depGraph = {};
+                let originGraph = {};
+
+                for (let conn of connections) {
+                    if (conn[0] == null || conn[1] == null) return;
+                    if (originGraph[conn[0]]) {
+                        originGraph[conn[0]].add(conn[1]);
+                    } else {
+                        originGraph[conn[0]] = new Set([conn[1]]);
+                    }
+                    if (depGraph[conn[1]]) {
+                        depGraph[conn[1]].add(conn[0]);
+                    } else {
+                        depGraph[conn[1]] = new Set([conn[0]]);
+                    }
+                }
+
+                let eqHolder = document.createElement('div');
+
+                for (let node in depGraph) {
+                    let parts = Array.from(depGraph[node]);
+
+                    let txt = node + " = " + node + " "; 
+
+                    for (let p of parts) {
+                        txt += "+" + (1/Array.from(originGraph[p]).length) * percentage + "" + p + " "; 
+                    }
+                    let sp = document.createElement("span");
+                    sp.innerHTML = txt;
+                    eqHolder.appendChild(sp);
+                    eqHolder.appendChild(document.createElement('br'));
+                }
+
+                par.appendChild(eqHolder);
+
+                var viz = new Viz();
+
+                let txt = "";
+
+                for (let conn of connections) {
+                    if (conn[0] == null || conn[1] == null) continue;
+
+                    txt += `${conn[0]} -> ${conn[1]} [label="${(1/Array.from(originGraph[conn[0]]).length) * percentage}"]\n`;
+                }
+  
+                viz.renderSVGElement(`digraph { ${txt} }`)
+                .then(function(element) {
+                  par.appendChild(element);
+                })
+                .catch(error => {
+                  // Create a new Viz instance (@see Caveat page for more info)
+                  viz = new Viz();
+
+                  // Possibly display the error
+                  console.error(error);
+                });
+
+
+            }
+            
+            generateRank();
+
+            var addConn = () => {
+                connections.push([null,null]);
+                generateRank();
+            };
+
+            var dropConn = () => {
+                connections = connections.slice(0, connections.length - 1);
+                generateRank();
+            };
         </script>
     </body>
 </html>

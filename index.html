@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Information Retrieval Calculators</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans&display=swap" rel="stylesheet">
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        html, body, * {
+            font-family: "DM Sans", sans-serif;
+        }
+
+        #navigation {
+            position: fixed;
+            display: block;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 58px;
+            width: 100%;
+            background: #dfdfdf;
+        }
+
+        #navigation ul {
+            list-style-type: none;
+            margin: 0 20px;
+            padding: 0;
+        }
+
+        #navigation ul li {
+            display: inline-block;
+            padding: 18.5px 20px;
+            cursor: pointer !important;
+            user-select: none !important;
+        }
+
+        #navigation ul li:hover {
+            background-color: #646464;
+            color: white;
+        }
+
+        #viewer {
+            margin-top: 58px;
+            width: 100%;
+            height: calc(100vh - 58px);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navigation">
+        <ul>
+            <li onclick="openFile('distances')">Distances</li>
+            <li onclick="openFile('search_engine_ranking')">Search Engine Ranking</li>
+        </ul>
+    </div>
+
+    <div id="content">
+        <iframe id="viewer" frameborder="0" style="border: none;"></iframe>
+    </div>
+
+    <script>
+        function openFile(name) {
+            document.querySelector('#viewer').src = `/${name}.html`;
+            if (name != '404') window.location.hash = name;
+        }
+
+        if (window.location.hash) {
+            console.log(window.location.hash.split('#')[1]);
+            openFile(window.location.hash.split('#')[1]);
+        } else openFile('404');
+    </script>
+
+</body>
+</html>
