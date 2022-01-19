@@ -531,7 +531,7 @@
 
                 let values = [roundV]
 
-                for (let i = 0; i < roundsToCalculate - 1; i++) {
+                for (let i = 0; i < roundsToCalculate; i++) {
                     let round = Array(Object.keys(depGraph).length).fill(0);
                     for (let node in nodeNames) {
                         let nName = nodeNames[node];
@@ -578,7 +578,7 @@
                     parent.appendChild(relative);
                 }
 
-                par1.appendChild(buildTable('', nodeNames, values, true));
+                par1.appendChild(buildTable('', ['Round #', ...nodeNames], values.map((a, i) => [i, ...a]), true));
 
             }
             

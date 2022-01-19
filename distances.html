@@ -94,6 +94,7 @@
                 outline: none !important;
                 background-color: transparent;
                 color: white;
+                transition: border-color .2s ease-out;
             }
 
             input:focus {
@@ -106,6 +107,7 @@
                 outline: none !important;
                 background-color: transparent;
                 color: white;
+                transition: border-color .2s ease-out;
             }
 
             textarea:focus {
@@ -147,6 +149,12 @@
             
             .inputbox{
                 margin: 10px 0;
+                padding: 10px 0;
+            }
+
+            .inputbox:first-of-type {
+                margin-top: 0;
+                padding-top: 0;
             }
 
             /* Card styles */
@@ -196,7 +204,7 @@
             }
  
 
-            .hidden { display: none; }
+            .hidden { visibility: hidden; }
         </style>
     </head>
     <body>
