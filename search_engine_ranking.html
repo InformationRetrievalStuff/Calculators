@@ -106,6 +106,9 @@
 
         <div id="table_relevant">
             <label for="total">Total docs</label><input type="text" id="total" onchange="handleRelevantInput('total', this)">
+            <label for="total">Relevant docs</label><input type="text" id="relevant" onchange="handleRelevantInput('relevant', this)">
+            <label for="total">Retrieved docs</label><input type="text" id="retrieved" onchange="handleRelevantInput('retrieved', this)">
+            <label for="total">Retrieved Relevant docs</label><input type="text" id="relevant-retrieved" onchange="handleRelevantInput('relevant-retrieved', this)">
             <table id="table_relevant_table">
                 <tr>
                     <td><label for="tp">True Positives</label><input id="tp" onchange="handleRelevantInput('tp', this)" type="text"></td>
@@ -116,8 +119,15 @@
                     <td><label for="fn">False Negatives</label><input id="fn" onchange="handleRelevantInput('fn', this)" type="text"></td>
                 </tr>
                 <tr>
-                    <td ><label>Recall</label><span id="recall"></td>
-                    <td ><label>Precision</label><span id="precision"></span></td>
+                    <td ><label>Precision </label><span id="precision"></span></td>
+                    <td ><label>Recall </label><span id="recall"></td>
+                </tr>
+                <tr>
+                    <td ><label>F(0.5) </label><span id="f0.5"></span></td>
+                    <td ><label>F(1) </label><span id="f1"></td>
+                </tr>
+                <tr>
+                    <td ><label>F(2) </label><span id="f2"></span></td>
                 </tr>
             </table>
         </div>
@@ -143,6 +153,9 @@
         <script >
 
             var total = null;
+            var relevant = null;
+            var retrieved = null;
+            var relevant_retrieved = null;
             var tp = null;
             var tn = null;
             var fp = null;
@@ -159,6 +172,15 @@
                 switch(name) {
                     case "total":
                         total = value;
+                        break;
+                    case "relevant":
+                        relevant = value;
+                        break;
+                    case "retrieved":
+                        retrieved = value;
+                        break;
+                    case "relevant-retrieved":
+                        relevant_retrieved = value;
                         break;
                     case "tp":
                         tp = value;
@@ -185,6 +207,17 @@
                 
                 document.getElementById("table_relevant_table").classList.remove('red');
                 document.getElementById("table_relevant_table").classList.remove('green');
+
+                if (total !== null && relevant !== null && relevant_retrieved !== null && retrieved !== null) {
+                    tp = relevant_retrieved;
+                    fp = retrieved - relevant_retrieved;
+                    fn = relevant - relevant_retrieved;
+                    tn = total - tp - fp - fn;
+                    document.getElementById("fn").value = fn
+                    document.getElementById("fp").value = fp;
+                    document.getElementById("tn").value = tn;
+                    document.getElementById("tp").value = tp;
+                }
 
                 let tpN = tp !== null;
                 let tnN = tn !== null;
@@ -242,6 +275,16 @@
                         
                         document.getElementById("recall").innerHTML = re;
                         document.getElementById("precision").innerHTML = pre;
+
+                        
+                        let f = (b) => {
+                            let v = ((b+1)*pre*re)/((b*pre)+re)
+                            return isNaN(v) ? '-' : v;
+                        };
+                        
+                        document.getElementById("f1").innerHTML = f(1);
+                        document.getElementById("f0.5").innerHTML = f(0.5);
+                        document.getElementById("f2").innerHTML = f(2);
 
                     } else {
                         document.getElementById("table_relevant_table").classList.add('red');

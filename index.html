@@ -35,7 +35,9 @@
             bottom: 0;
             height: 58px;
             width: 100%;
-            background: #dfdfdf;
+            background: rgb(21, 29, 32);
+            color: white;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
         }
 
         #navigation ul {
@@ -49,10 +51,12 @@
             padding: 18.5px 20px;
             cursor: pointer !important;
             user-select: none !important;
+
+            transition: background-color .2s ease-out;
         }
 
         #navigation ul li:hover {
-            background-color: #646464;
+            background-color: #202a2e;
             color: white;
         }
 
