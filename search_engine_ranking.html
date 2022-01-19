@@ -79,6 +79,16 @@
                 border: 3px solid green;
             }
 
+            span.green {
+                background-color: green;
+                color: white;
+            }
+
+            span.red {
+                background-color: red;
+                color: white;
+            }
+
             .hidden { display: none; }
             .noborder {
                 border: none;
@@ -243,6 +253,38 @@
                     headers.appendChild(th);
                 }
                 table.appendChild(headers);
+
+                let calculateValues = () => {
+                    let best = [-1,-1,-1,-1];
+                    let bestI = [-1,-1,-1,-1];
+                    let worst = [10000,10000,10000,10000];
+                    let worstI = [-1,-1,-1,-1];
+                    let values = [];
+                    for (let systemI in systems) {
+                        let system = systems[systemI];
+                        let f = (b) => {
+                            let v = ((b+1)*system[0]*system[1])/((b*system[0])+system[1])
+                            return isNaN(v) ? '-' : v;
+                        };
+                        let v = [f(0.5), f(1), f(2), fc ? f(fc) : '-'];
+                        for (let i = 0; i < 4; i++) {
+                            if (v[i] == '-') continue;
+                            if (v[i] > best[i]) {
+                                best[i] = v[i];
+                                bestI[i] = systemI;
+                            }
+                            if (v[i] < worst[i]) {
+                                worst[i] = v[i];
+                                worstI[i] = systemI;
+                            }
+                        }
+                        values.push(v);
+                    }
+                    return [bestI, worstI, values]
+                }
+                
+                let [best, worst, values] = calculateValues();
+
                 for (let systemI in systems) {
                     let system = systems[systemI];
                     let row = document.createElement('tr');
@@ -257,13 +299,25 @@
                     input2.setAttribute('value', system[1]);
                     input2.id = `s${systemI}1`;
 
-                    let f = (b) => {
-                        let v = ((b+1)*system[0]*system[1])/((b*system[0])+system[1])
-                        return isNaN(v) ? '-' : v;
-                    };
+                    let inputs = []
 
+                    let createSpan = (status, text) => {
+                        if (status == 0) return text
+                        let span = document.createElement('span');
+                        if (status == 1) span.classList.add('green');
+                        if (status == 2) span.classList.add('red');
+                        span.innerHTML = text;
+                        return span.outerHTML;
+                    }
 
-                    for (let cvalue of [`System ${Number(systemI) + 1}`, input.outerHTML, input2.outerHTML, f(0.5), f(1), f(2), fc ? f(fc) : '-']) {
+                    let vs = values[systemI];
+
+                    for (let i in vs) { 
+                        console.log("test");
+                        inputs.push(createSpan(best[i] == systemI ? 1 : worst[i] == systemI ? 2 : 0, vs[i]))
+                    }
+
+                    for (let cvalue of [`System ${Number(systemI) + 1}`, input.outerHTML, input2.outerHTML, ...inputs]) {
                         let td = document.createElement('td');
                         td.innerHTML = cvalue;
                         row.appendChild(td);
