@@ -161,8 +161,6 @@
             var fp = null;
             var fn = null;
 
-            
-            
             const handleRelevantInput = (name, e) => {
                 let value = null
                 if (e.value != "") {
@@ -203,8 +201,6 @@
             }
 
             const updateRelevantValues = () => {
-                
-                
                 document.getElementById("table_relevant_table").classList.remove('red');
                 document.getElementById("table_relevant_table").classList.remove('green');
 
@@ -292,7 +288,6 @@
                 }
 
             }
-
 
             let fc = null;
             let systems = [[0,0]];
@@ -424,6 +419,7 @@
             }
 
             var percentage = 0;
+            var startValue = 1;
 
             function handleRankInput(isPer, sysI, a, e) {
                 if(isPer) {
@@ -432,7 +428,11 @@
                     if (!sysI) {
                         percentage = parseIn;
                     } else {
-                        roundsToCalculate = parseIn;
+                        if (a) {
+                            startValue = parseIn;
+                        } else {
+                            roundsToCalculate = parseIn;
+                        }
                     }
                 } else {
                     connections[sysI][a] = e.value == '' ? null : e.value;
@@ -522,7 +522,6 @@
 
                 par.appendChild(eqHolder);
 
-                var viz = new Viz();
 
                 let txt = "";
 
@@ -532,17 +531,20 @@
                     txt += `${conn[0]} -> ${conn[1]} [label="${(1/Array.from(originGraph[conn[0]]).length) * percentage}"]\n`;
                 }
   
-                viz.renderSVGElement(`digraph { ${txt} }`)
-                .then(function(element) {
-                  par.appendChild(element);
-                })
-                .catch(error => {
-                  // Create a new Viz instance (@see Caveat page for more info)
-                  viz = new Viz();
+                try {
+                    var viz = new Viz();
+                    viz.renderSVGElement(`digraph { ${txt} }`)
+                    .then(function(element) {
+                      par.appendChild(element);
+                    })
+                    .catch(error => {
+                      // Create a new Viz instance (@see Caveat page for more info)
+                      viz = new Viz();
 
-                  // Possibly display the error
-                  console.error(error);
-                });
+                      // Possibly display the error
+                      console.error(error);
+                    });
+                } catch(e) {}
 
                 
                 let par1 = document.getElementById("genRankRR");
@@ -560,17 +562,25 @@
                 span("Rounds to calculate")
 
                 let input = document.createElement('input');
-                input.onchange = () => handleRankInput(true, true, 0, input);
+                input.onchange = () => handleRankInput(true, true, false, input);
                 input.value = roundsToCalculate;
-                
                 par1.appendChild(input);
+                br();
+
+                span("Start Value")
+
+                let input2 = document.createElement('input');
+                input2.onchange = () => handleRankInput(true, true, true, input2);
+                input2.value = startValue;
+                
+                par1.appendChild(input2);
 
                 let nodeNames = new Set();
                 Object.keys(depGraph).forEach(a => nodeNames.add(a));
                 Object.keys(originGraph).forEach(a => nodeNames.add(a));
                 nodeNames = Array.from(nodeNames);
                 nodeNames.sort();
-                let roundV = Array(nodeNames.length).fill(1);
+                let roundV = Array(nodeNames.length).fill(startValue);
 
                 let values = [roundV]
 
