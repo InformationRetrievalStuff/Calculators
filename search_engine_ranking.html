@@ -339,6 +339,12 @@
                 }
 
                 par.appendChild(table);
+
+                let label = (text) => {
+                    let l = document.createElement('l');
+                    l.innerHTML = text;
+                    root.appendChild(l);
+                }
             }
 
             generateT();

@@ -74,8 +74,10 @@
     </div>
 
     <script>
+        const baseURL = window.location.href;
+
         function openFile(name) {
-            document.querySelector('#viewer').src = `/${name}.html`;
+            document.querySelector('#viewer').src = `${baseURL}${name}.html`;
             if (name != '404') window.location.hash = name;
         }
 
