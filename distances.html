@@ -18,7 +18,9 @@
             }
 
             body{
-                background-image: linear-gradient(#263238, #003238);
+                background-image: linear-gradient(#263238, #024850);
+                background-repeat: no-repeat;
+                background-attachment: fixed;
                 color: #00cc80;
             }
 
@@ -62,9 +64,67 @@
                 top: 0;
                 right: 0;
                 padding: 20px 40px;
-                background: white;
+                padding-top: 5px;
+                
+                background-image: linear-gradient(rgb(21, 29, 32), rgb(20, 85, 92));
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+
                 z-index: 2;
-                color: #000;
+                color: #fff;
+                border-bottom-left-radius: 6px;
+                box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+
+                max-height: calc(100vh - 100px);
+                overflow-y: auto;
+            }
+
+            #controls table{
+                margin: 0;
+                width: 100%;
+            }
+
+            #controls table * {
+                border-color: white;
+            }
+
+            input {
+                border: none;
+                border-bottom: 2px solid #00cc80;
+                outline: none !important;
+                background-color: transparent;
+                color: white;
+            }
+
+            input:focus {
+                border-color: #98ee99;
+            }
+
+            textarea {
+                border: 2px solid #00cc80;
+                border-radius: 6px;
+                outline: none !important;
+                background-color: transparent;
+                color: white;
+            }
+
+            textarea:focus {
+                border-color: #98ee99;
+            }
+
+            button{
+                padding: 10px 20px;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                background:#263238;
+                color: #98ee99;
+                border: none;
+                border-radius: 6px;
+                user-select: none !important;
+            }
+
+            button:active {
+                opacity: 0.7;
             }
 
             #showControls {
@@ -76,25 +136,92 @@
             }
 
             textarea {
-                min-width: 100%;
+                width: calc(100% - 10px);
+                padding: 8px 10px;
             }
 
-            .inputbox input{
+            .inputbox input {
                 width: 100%;
+                padding: 8px 5px;
             }
+            
+            .inputbox{
+                margin: 10px 0;
+            }
+
+            /* Card styles */
+            @property --rotate {
+                syntax: "<angle>";
+                initial-value: 0deg;
+                inherits: false;
+            }
+            .card {
+                display: inline-block;
+                position: relative;
+                padding: 1px;
+                border-radius: 6px;
+                border: double 1px transparent;
+                background-image: linear-gradient(#1f2937, #1f2937), linear-gradient(#00cc80, #00cc80);
+                background-origin: border-box;
+                background-clip: content-box, border-box;
+                animation: rotate 2.5s linear infinite;
+            }
+            .card:hover {
+                background-image: linear-gradient(#1f2937, #1f2937), linear-gradient(var(--rotate), rgba(195, 226, 22, 1) 0%, rgba(252, 175, 69, 1) 100%);
+            }
+            .card:after {
+                content: "";
+                z-index: -1;
+                display: block;
+                height: 100%;
+                width: 100%;
+                position: absolute;
+                top: 0;
+                left: 0;
+                border-radius: 6px;
+                background-image: linear-gradient(var(--rotate), rgba(195, 226, 22, 1) 0%, rgba(252, 175, 69, 1) 100%);
+                transition: filter 0.2s ease-out;
+                animation: rotate 2.5s linear infinite;
+            }
+            .card:hover:after {
+                filter: blur(10px);
+            }
+            @keyframes rotate {
+                0% {
+                    --rotate: 0deg;
+                }
+                100% {
+                    --rotate: 360deg;
+                }
+            }
+ 
 
             .hidden { display: none; }
         </style>
     </head>
     <body>
-        <button id="showControls" onclick="showControls()">Show Controls</button>
+        <div class="card" id="showControls">
+            <button onclick="showControls()">Show Controls</button>
+        </div>
         <div id="controls">
-            <p><button onclick="hideControls()">Hide Controls</button></p>
+            <p style="text-align: right;">
+                <span class="card">
+                    <button onclick="hideControls()">Hide Controls</button>
+                </span>
+            </p>
             <br/>
             <div id="ins"></div>
-            <button onclick="update()"> Update </button>
-            <button onclick="addDoc()"> Add Doc </button>
-            <button onclick="dropDoc()"> Remove Doc </button><br/>
+            <div style="margin: 20px 0;">
+                <div class="card">
+                    <button onclick="update()"> Update </button>
+                </div>
+                <div class="card">
+                    <button onclick="addDoc()"> Add Doc </button>
+                </div>
+                <div class="card">
+                    <button onclick="dropDoc()"> Remove Doc </button>
+                </div>
+            </div>
             <label>Show TFIDF</label><input type="checkbox" onchange="changeOp('tfidf')">
             <table>
                 <tr>

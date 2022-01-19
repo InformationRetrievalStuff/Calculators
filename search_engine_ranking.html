@@ -135,8 +135,9 @@
             <label>
                 Shared percentage
             </label>
-            <input onchange="handleRankInput(true, '', '', this)" />
+            <input onchange="handleRankInput(true, false, '', this)" />
             <div id="genRankR"></div>
+            <div id="genRankRR"></div>
         </div>
 
         <script >
@@ -146,6 +147,8 @@
             var tn = null;
             var fp = null;
             var fn = null;
+
+            
             
             const handleRelevantInput = (name, e) => {
                 let value = null
@@ -340,11 +343,22 @@
 
                 par.appendChild(table);
 
-                let label = (text) => {
-                    let l = document.createElement('l');
+                let span = (text) => {
+                    let l = document.createElement('span');
                     l.innerHTML = text;
-                    root.appendChild(l);
+                    par.appendChild(l);
                 }
+                let  br = (text) => {
+                    par.appendChild(document.createElement('br'));
+                }
+
+                if (best[0] == -1) return;
+
+                span('Best for precision: System ' + (Number(best[0]) + 1));
+                br();
+                span('Best for balance: System ' + (Number(best[1]) + 1));
+                br();
+                span('Best for recall: System ' + (Number(best[2]) + 1));
             }
 
             generateT();
@@ -372,7 +386,11 @@
                 if(isPer) {
                     let parseIn = Number(e.value);
                     parseIn = isNaN(parseIn) ? 0 : parseIn;
-                    percentage = parseIn;
+                    if (!sysI) {
+                        percentage = parseIn;
+                    } else {
+                        roundsToCalculate = parseIn;
+                    }
                 } else {
                     connections[sysI][a] = e.value == '' ? null : e.value;
                 }
@@ -380,6 +398,8 @@
             }
 
             var connections = [];
+
+            var roundsToCalculate = 2;
 
             var generateRank = () => {
                 let par = document.getElementById("genRank");
@@ -481,6 +501,84 @@
                   console.error(error);
                 });
 
+                
+                let par1 = document.getElementById("genRankRR");
+                par1.innerHTML = "";
+
+                let span = (text) => {
+                    let l = document.createElement('span');
+                    l.innerHTML = text;
+                    par1.appendChild(l);
+                }
+                let  br = (text) => {
+                    par1.appendChild(document.createElement('br'));
+                }
+
+                span("Rounds to calculate")
+
+                let input = document.createElement('input');
+                input.onchange = () => handleRankInput(true, true, 0, input);
+                input.value = roundsToCalculate;
+                
+                par1.appendChild(input);
+
+                let nodeNames = new Set();
+                Object.keys(depGraph).forEach(a => nodeNames.add(a));
+                Object.keys(originGraph).forEach(a => nodeNames.add(a));
+                nodeNames = Array.from(nodeNames);
+                nodeNames.sort();
+                let roundV = Array(nodeNames.length).fill(1);
+
+                let values = [roundV]
+
+                for (let i = 0; i < roundsToCalculate - 1; i++) {
+                    let round = Array(Object.keys(depGraph).length).fill(0);
+                    for (let node in nodeNames) {
+                        let nName = nodeNames[node];
+                        round[node] = roundV[node];
+                        if (!depGraph[nName]) continue;
+                        
+                        let parts = Array.from(depGraph[nName]);
+
+                        for (let p of parts) {
+                            round[node] += (1/Array.from(originGraph[p]).length) * percentage * roundV[nodeNames.indexOf(p)]; 
+                        }
+                    }
+
+                    values.push(round);
+                    roundV = [...round];
+                }
+
+                
+                let buildTable = (name, cNames, cValues, returnV = false) => {
+                    let relative = document.createElement('div');
+                    let nameE = document.createElement('h2');
+                    nameE.innerHTML = name;
+                    relative.appendChild(nameE);
+                    let table = document.createElement('table');
+                    let headers = document.createElement('tr');
+                    for (let cname of cNames) {
+                        let th = document.createElement('th');
+                        th.innerHTML = cname;
+                        headers.appendChild(th);
+                    }
+                    table.appendChild(headers);
+                    for (let l1 of cValues) {
+                        let row = document.createElement('tr');
+                        for (let cvalue of l1) {
+                                let td = document.createElement('td');
+                                td.innerHTML = cvalue;
+                                row.appendChild(td);
+                        }
+                        table.appendChild(row);
+                    }
+                    relative.appendChild(table);
+                    if (returnV)
+                        return table;
+                    parent.appendChild(relative);
+                }
+
+                par1.appendChild(buildTable('', nodeNames, values, true));
 
             }
             
