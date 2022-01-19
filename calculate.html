@@ -109,6 +109,7 @@
                     <td><input type="checkbox" onchange="changeOp('cos3')"></td>
                 </tr>
             </table>
+            <div id="ins2"></div>
         </div>
 
         <div id="add"></div>
@@ -129,6 +130,18 @@
             let cosRel = false;
             let cosTFIDF = false;
             let showTfIdf = false;
+            var totalDocCount = 0;
+            var docValues = {};
+
+            let getSortedWordList = () => {
+                let list = new Set();
+                f.forEach(a => Object.keys(a).forEach(b => {
+                    if (a[b] > 0)
+                        list.add(b);
+                }));
+                console.log(list);
+                return Array.from(list).sort();
+            };
 
             var generateIns = () => {
                 let par = document.getElementById("ins");
@@ -199,6 +212,7 @@
                 let parseIn = parse(e.value);
                 f[doc] = parseIn;
                 mergeValues();
+                showTFIDFOut();
                 output();
             }
 
@@ -244,22 +258,12 @@
                 let calculateIDF = () => {
                     if (f.length == 0) return;
                     let r = {};
-                    let list = [];
-                    Object.keys(f[0]).sort().forEach((a, i) => {
-                        r[a] = 0;
-                        list[i] = a;
-
-                    });
-
-                    for (let l of f) {
-                        for (let item in l) {
-                            if (l[item] > 0) {
-                                r[item]++;
-                            }
-                        }
+                    let list = getSortedWordList();
+                    for (let l of list) {
+                        r[l] = docValues[l] ?? 0;
                     }
 
-                    Object.keys(r).forEach(a => r[a] = Math.log10(f.length / r[a]));
+                    Object.keys(r).forEach(a => r[a] = Math.log10(totalDocCount / r[a]));
 
                     return [r, list];
                 };
@@ -375,6 +379,53 @@
                 root.appendChild(parent);
             }
 
+            const handleShowTFIDFValues = (isTotal, id, e) => {
+                console.log("test");
+                let value = Number(e.value);
+                value = isNaN(value) ? 0 : value;
+
+                if (isTotal)
+                    totalDocCount = value;
+                else 
+                    docValues[id] = value;
+                showTFIDFOut();
+                output();
+            }
+
+            const showTFIDFOut = () => {
+                let root = document.getElementById('ins2');
+                root.innerHTML = "";
+                if(!(manTFIDF || eucTFIDF || cosTFIDF || showTfIdf)) return;
+
+                let label = (text) => {
+                    let l = document.createElement('l');
+                    l.innerHTML = text;
+                    root.appendChild(l);
+                }
+
+                let input = (onchange, value) => {
+                    let inp =  document.createElement('input');
+                    inp.onchange = () => onchange(inp);
+                    inp.value = value;
+                    root.appendChild(inp);
+                }
+
+                let group = (text, onchange, value) => {
+                    label(text);
+                    input(onchange, value);
+                    root.appendChild(document.createElement('br'));
+                }
+
+                group('Total number of documents', (i) => handleShowTFIDFValues(true, '', i), totalDocCount);
+
+                let list = getSortedWordList();
+
+                for (let a of list) {
+                    group(a, (i) => handleShowTFIDFValues(false, a, i), docValues[a] ?? 0);
+                }
+
+            }
+
             const changeOp = (op) => {
                 switch(op) {
                     case "man1":
@@ -408,6 +459,7 @@
                         showTfIdf = !showTfIdf;
                         break
                 }
+                showTFIDFOut();
                 mergeValues();
                 output();
             }
